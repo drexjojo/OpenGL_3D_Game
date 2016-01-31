@@ -379,22 +379,7 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Function is called first on GLFW_PRESS.
 
-	if (action == GLFW_RELEASE) {
-		switch (key) {
-			case GLFW_KEY_C:
-				rectangle_rot_status = !rectangle_rot_status;
-				break;
-			case GLFW_KEY_P:
-				triangle_rot_status = !triangle_rot_status;
-				break;
-			case GLFW_KEY_X:
-				// do something ..
-				break;
-			default:
-				break;
-		}
-	}
-	else if (action == GLFW_PRESS) {
+	if (action == GLFW_PRESS) {
 		switch (key) {
 			case GLFW_KEY_ESCAPE:
 				quit(window);
@@ -402,17 +387,25 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 			case GLFW_KEY_T:
 				changeview();
 				break;
-			case GLFW_KEY_W:
+			case GLFW_KEY_UP:
 				player.posz -= 0.2;
+				if(player.posz < cubes[99].posz)
+					player.posz = cubes[99].posz;
 				break;
-			case GLFW_KEY_S:
+			case GLFW_KEY_DOWN:
 				player.posz += 0.2;
+				if(player.posz > cubes[1].posz)
+					player.posz = cubes[1].posz;
 				break;
-			case GLFW_KEY_A:
+			case GLFW_KEY_LEFT:
 				player.posx -= 0.2;
+				if(player.posx < cubes[0].posx)
+					player.posx = cubes[0].posx;
 				break;
-			case GLFW_KEY_D:
+			case GLFW_KEY_RIGHT:
 				player.posx += 0.2;
+				if(player.posx > cubes[9].posx)
+					player.posx = cubes[9].posx;
 				break;
 
 			default:
@@ -421,17 +414,25 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	}
 	else if (action == GLFW_REPEAT) {
         switch (key) {
-            case GLFW_KEY_W:
+            case GLFW_KEY_UP:
 				player.posz -= 0.2;
+				if(player.posz < cubes[99].posz)
+					player.posz = cubes[99].posz;
 				break;
-			case GLFW_KEY_S:
+			case GLFW_KEY_DOWN:
 				player.posz += 0.2;
+				if(player.posz > cubes[1].posz)
+					player.posz = cubes[1].posz;
 				break;
-			case GLFW_KEY_A:
+			case GLFW_KEY_LEFT:
 				player.posx -= 0.2;
+				if(player.posx < cubes[0].posx)
+					player.posx = cubes[0].posx;
 				break;
-			case GLFW_KEY_D:
+			case GLFW_KEY_RIGHT:
 				player.posx += 0.2;
+				if(player.posx > cubes[9].posx)
+					player.posx = cubes[9].posx;
 				break;
 
 			default:
