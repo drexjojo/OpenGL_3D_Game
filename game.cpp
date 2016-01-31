@@ -15,6 +15,8 @@
 
 using namespace std;
 
+GLfloat fov = 70;
+
 struct VAO {
 	GLuint VertexArrayID;
 	GLuint VertexBuffer;
@@ -350,7 +352,7 @@ float triangle_rot_dir = 1;
 float rectangle_rot_dir = -1;
 bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
-GLfloat eyex ,eyey ,eyez;
+GLfloat eyex ,eyey ,eyez ,tarx,tary,tarz;
 bool topview = false;
 bool towerview =true;
 VAO *axises ;
@@ -478,8 +480,6 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	/* With Retina display on Mac OS X, GLFW's FramebufferSize
 	 is different from WindowSize */
 	glfwGetFramebufferSize(window, &fbwidth, &fbheight);
-
-	GLfloat fov = 70.0f;
 
 	// sets the viewport of openGL renderer
 	glViewport (0, 0, (GLsizei) fbwidth, (GLsizei) fbheight);
@@ -760,9 +760,9 @@ void draw ()
 	glUseProgram (programID);
 
 	// Eye - Location of camera. Don't change unless you are sure!!
-	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
+	
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
-	glm::vec3 target (0, 0, 0);
+	
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
 	glm::vec3 up (0, 1, 0);
 
@@ -771,15 +771,26 @@ void draw ()
 		eyex=0;
 		eyey=15;
 		eyez=20;
+		tarx =player.posx;
+		tary =player.posy;
+		tarz =player.posz;
+		fov = 70;
 	}
 
 	else
 	{
 		eyex=0;
-		eyey=15;
-		eyez=3;
+		eyey=30;
+		eyez=1;
+		tarx = 0;
+		tary=0;
+		tarz=0;
+		fov = 70.2;
 	}
-	Matrices.view = glm::lookAt(glm::vec3(eyex,eyey,eyez), glm::vec3(0,0,0),up); // Fixed camera for 2D (ortho) in XY plane
+
+	glm::vec3 eye (eyex,eyey,eyez);
+	glm::vec3 target (tarx, tary, tarz);
+	Matrices.view = glm::lookAt(eye,target,up); // Fixed camera for 2D (ortho) in XY plane
 
 	glm::mat4 VP = Matrices.projection * Matrices.view;
 	glm::mat4 MVP;	
@@ -1052,6 +1063,8 @@ int main (int argc, char** argv)
 
 		// OpenGL Draw commands
 		draw();
+
+		reshapeWindow (window, width, height);
 
 		// Swap Frame Buffer in double buffering
 		glfwSwapBuffers(window);
