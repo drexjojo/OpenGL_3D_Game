@@ -38,8 +38,15 @@ struct CUBE {
 };
 typedef struct CUBE CUBE;
 
+struct SEA {
+	GLfloat posx ,posy,posz;
+	VAO *vao;
+};
+typedef struct SEA SEA;
+
 struct PLAYER {
 	GLfloat posx ,posy,posz;
+	GLfloat radius,velx,vely,velz;
 	VAO *vao;
 };
 typedef struct CUBE CUBE;
@@ -354,10 +361,12 @@ bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
 GLfloat eyex ,eyey ,eyez ,tarx,tary,tarz;
 bool topview = false;
-bool towerview =true;
-VAO *axises ;
+bool playerview = true;
+bool towerview =false;
+VAO *axises;
 CUBE cubes[100];
 PLAYER player;
+SEA sea[1000];
 
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
@@ -367,11 +376,19 @@ void changeview()
 	if(towerview == true)
 	{
 		towerview = false;
+		playerview = false;
 		topview = true;
 	}
-	else
+	else if (topview == true)
 	{
 		topview = false;
+		playerview = true;
+		towerview = false;
+	}
+	else if (playerview == true)
+	{
+		topview = false;
+		playerview = false;
 		towerview = true;
 	}
 }
@@ -526,105 +543,240 @@ void createaxis ()
 	axises = create3DObject(GL_LINES, 6, vertex_buffer_data, color_buffer_data, GL_LINE);
 }
 
+
 // Creates the rectangle object used in this sample code
 
-PLAYER makeplayer(PLAYER player)
+PLAYER makeplayer(PLAYER player,GLuint textureID)
 {
 	player.posx = cubes[0].posx;
-	player.posy = cubes[0].posy+3.5;
+	player.posy = cubes[0].posy+3.5+5;
 	player.posz = cubes[0].posz;
+	player.velx =0;
+	player.vely =0;
+	player.velz =0;
+	player.radius = sqrt(0.64+0.64+0.64)/2;
+	int length =2,width=2,height=2;
 	static const GLfloat vertex_buffer_data [] = {
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, 1.0f, -1.0f,
-		1.0f, -1.0f, 1.0f,
-		-1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, 1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, -1.0f,
-		1.0f, -1.0f, 1.0f,
-		-1.0f, -1.0f, 1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, -1.0f, 1.0f,
-		1.0f, -1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, 1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, -1.0f,
-		-1.0f, 1.0f, -1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, -1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, 1.0f
+			 //left face
+	    -length/2,height/2,width/2, // vertex 1
+	    -length/2,-height/2,width/2, // vertex 2
+	    -length/2,-height/2,-width/2, // vertex 3
+
+	    -length/2,height/2,width/2, // vertex 1
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,height/2,-width/2, //vertex 4
+
+	    //front face
+	    -length/2,height/2,width/2, // vertex 1
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,-height/2,width/2, // vertex 2
+
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,-height/2,width/2, // vertex 2
+	    length/2,-height/2,width/2, //vertex 6
+	    
+	    //top face
+	    -length/2,height/2,width/2, // vertex 1
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,height/2,-width/2, //vertex 4
+	    
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,height/2,-width/2, //vertex 4
+	    length/2,height/2,-width/2, // vertex 7
+
+	    //right face
+	    length/2,height/2,width/2, // vertex 5
+	    length/2,-height/2,width/2, //vertex 6
+	    length/2,height/2,-width/2, // vertex 7
+
+	    length/2,-height/2,width/2, //vertex 6
+	    length/2,height/2,-width/2, // vertex 7
+	    length/2,-height/2,-width/2, //vertex 8
+
+	    //Back face
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,height/2,-width/2, //vertex 4
+	    length/2,height/2,-width/2, // vertex 7
+
+	    -length/2,-height/2,-width/2, // vertex 3
+	    length/2,-height/2,-width/2, //vertex 8
+	    length/2,height/2,-width/2, // vertex 7
+
+	    //Bottom face
+	    -length/2,-height/2,-width/2, // vertex 3
+	    length/2,-height/2,-width/2, //vertex 8
+	    length/2,-height/2,width/2, //vertex 6
+
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,-height/2,width/2, // vertex 2
+	    length/2,-height/2,width/2 //vertex 6
 	};
 	
-	static const GLfloat color_buffer_data [] = {
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1,
-		0,0,1
+	static const GLfloat texture_buffer_data [] = {
+		0,1, 
+		1,1, 
+		1,0, 
 
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
 	};
-	// Texture coordinates start with (0,0) at top left of the image to (1,1) at bot right
-	// static const GLfloat texture_buffer_data [] = {
-	// 	0,1, // TexCoord 1 - bot left
-	// 	1,1, // TexCoord 2 - bot right
-	// 	1,0, // TexCoord 3 - top right
-
-	// 	1,0, // TexCoord 3 - top right
-	// 	0,0, // TexCoord 4 - top left
-	// 	0,1  // TexCoord 1 - bot left
-	// };
-
-	// create3DTexturedObject creates and returns a handle to a VAO that can be used later
-	player.vao = create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_FILL);
+	player.vao = create3DTexturedObject(GL_TRIANGLES, 36, vertex_buffer_data, texture_buffer_data, textureID, GL_FILL);
 	return player;
+}
+
+SEA create_sea(SEA sea ,GLuint textureID,GLfloat x,GLfloat y,GLfloat z){
+	int length =2,width=2,height=2;
+	sea.posx =x;
+	sea.posy =y;
+	sea.posz =z;
+	static const GLfloat vertex_buffer_data [] = {
+			 //left face
+	    -length/2,height/2,width/2, // vertex 1
+	    -length/2,-height/2,width/2, // vertex 2
+	    -length/2,-height/2,-width/2, // vertex 3
+
+	    -length/2,height/2,width/2, // vertex 1
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,height/2,-width/2, //vertex 4
+
+	    //front face
+	    -length/2,height/2,width/2, // vertex 1
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,-height/2,width/2, // vertex 2
+
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,-height/2,width/2, // vertex 2
+	    length/2,-height/2,width/2, //vertex 6
+	    
+	    //top face
+	    -length/2,height/2,width/2, // vertex 1
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,height/2,-width/2, //vertex 4
+	    
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,height/2,-width/2, //vertex 4
+	    length/2,height/2,-width/2, // vertex 7
+
+	    //right face
+	    length/2,height/2,width/2, // vertex 5
+	    length/2,-height/2,width/2, //vertex 6
+	    length/2,height/2,-width/2, // vertex 7
+
+	    length/2,-height/2,width/2, //vertex 6
+	    length/2,height/2,-width/2, // vertex 7
+	    length/2,-height/2,-width/2, //vertex 8
+
+	    //Back face
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,height/2,-width/2, //vertex 4
+	    length/2,height/2,-width/2, // vertex 7
+
+	    -length/2,-height/2,-width/2, // vertex 3
+	    length/2,-height/2,-width/2, //vertex 8
+	    length/2,height/2,-width/2, // vertex 7
+
+	    //Bottom face
+	    -length/2,-height/2,-width/2, // vertex 3
+	    length/2,-height/2,-width/2, //vertex 8
+	    length/2,-height/2,width/2, //vertex 6
+
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,-height/2,width/2, // vertex 2
+	    length/2,-height/2,width/2 //vertex 6
+	};
+	
+	static const GLfloat texture_buffer_data [] = {
+		0,1, 
+		1,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+	};
+	sea.vao = create3DTexturedObject(GL_TRIANGLES, 36, vertex_buffer_data, texture_buffer_data, textureID, GL_FILL);
+	return sea;
 }
 CUBE createcube (CUBE cube,float positionx,float positiony,float positionz)
 {
@@ -753,42 +905,142 @@ CUBE movecube(CUBE cube)
 float camera_rotation_angle = 90;
 float rectangle_rotation = 0;
 float triangle_rotation = 0;
+GLfloat timenow=0,timethen=0,gravitypower = -0.1;
 
+
+void gravity()
+{
+	timenow = glfwGetTime();
+	player.vely += gravitypower *(timenow-timethen);
+	player.posy += player.vely;
+	//cout<<timenow<<endl;
+	timethen = timenow;
+}
+
+
+PLAYER YouCollide(PLAYER player, CUBE cube) // AABB - Circle collision
+{
+  // Get center point circle first 
+  glm::vec3 center(player.posx,player.posy,player.posz);
+  // Calculate AABB info (center, half-extents)
+  glm::vec3 aabb_half_extents(1, 3, 1);
+  glm::vec3 aabb_center(cube.posx, cube.posy, cube.posz);
+  // Get difference vector between both centers
+  glm::vec3 difference = center - aabb_center;
+  glm::vec3 clamped = glm::clamp(difference, -aabb_half_extents, aabb_half_extents);
+  // Add clamped value to AABB_center and we get the value of box closest to circle
+  glm::vec3 closest = aabb_center + clamped;
+  difference = center-closest;
+  glm::vec3 yaxis( 0.0, 1.0 ,0.0);
+  glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+
+  glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+  // Retrieve vector between center circle and closest point AABB and check if length <= radius
+  float yot=glm::dot(difference, yaxis);
+  float xot=glm::dot(difference, xaxis);
+  float zot=glm::dot(difference, zaxis);
+
+
+  if (glm::length(difference) < (player.radius-0.1))
+    {
+      if( xot > 0 )
+	{
+	  cout<<"Hurray!\n";
+	  player.posx += 0.05;
+	  
+	}
+      else if( xot < 0 )
+	{
+	  cout<<"Eureka!\n";
+	  player.posx -= 0.05;
+	  
+	}
+      else
+	{
+	  if( yot > 0 )
+	    {
+	      cout<<"Yurray!\n";
+	      //if(player.posy <= 3.5)
+	      // 	player.posy =3.5;
+	      //else
+	      player.posy += 0.05;
+	  
+	    }
+	  else if( yot < 0 )
+	    {
+	      cout<<"Yureka!\n";
+	      player.posy -= 0.05;
+	    }
+	  else
+	    {
+
+	      if( zot > 0 )
+		{
+		  cout<<"Zurray!\n";
+		  player.posz += 0.05;
+	
+		}
+	      else if( zot < 0 )
+		{
+		  cout<<"Zureka!\n";
+		  player.posz -= 0.05;
+	
+		}
+	    }
+
+	}
+    }
+     return player;
+}
 void draw ()
 {
 	// clear the color and depth in the frame buffer
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram (programID);
-
-	// Eye - Location of camera. Don't change unless you are sure!!
-	
-	// Target - Where is the camera looking at.  Don't change unless you are sure!!
-	
-	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
 	glm::vec3 up (0, 1, 0);
 
 	if(towerview == true)
 	{
-		eyex=0;
-		eyey=15;
-		eyez=20;
+		if(eyex < 12)
+			eyex+=0.3;
+		
+		if(eyey < 15)
+			eyey+=0.3;
+		
+		eyez=0;
 		tarx =player.posx;
 		tary =player.posy;
 		tarz =player.posz;
 		fov = 70;
 	}
 
-	else
+	else if(topview == true)
 	{
-		eyex=0;
-		eyey=30;
-		eyez=1;
+		if(eyex > 0)
+			eyex -=0.3;
+		// eyex=0;
+		if(eyey < 30)
+			eyey+=0.3;
+		// eyey=30;
+		if(eyez < 1)
+			eyez+=0.3;
+		// eyez=1;
 		tarx = 0;
 		tary=0;
 		tarz=0;
 		fov = 70.2;
 	}
 
+	else if(playerview == true)
+	{
+		eyex = player.posx;
+		eyey = player.posy +5 ;
+		eyez = player.posz + 7 ;
+		tarx =player.posx;
+		tary =player.posy;
+		tarz =player.posz;
+
+	}
 	glm::vec3 eye (eyex,eyey,eyez);
 	glm::vec3 target (tarx, tary, tarz);
 	Matrices.view = glm::lookAt(eye,target,up); // Fixed camera for 2D (ortho) in XY plane
@@ -796,8 +1048,16 @@ void draw ()
 	glm::mat4 VP = Matrices.projection * Matrices.view;
 	glm::mat4 MVP;	
 
-	
-
+	if(player.posy <= cubes[0].posy+4)
+	{
+		player.vely =0;
+		gravitypower=0;
+	}
+	else
+	{
+		player.gravitypower = -0.1;
+		gravity();
+	}
 	//Rendering cubes
 	
 	for (int j = 0; j < 100; ++j)
@@ -814,19 +1074,12 @@ void draw ()
 			MVP = VP * Matrices.model; // MVP = p * V * M
 			glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		 	draw3DObject(cubes[j].vao);
+		 	player = YouCollide(player,cubes[j]);
 		 	
 	 	}
 	 }	
 
-	 // Rendering Player
-	Matrices.model = glm::mat4(1.0f);
-	glm::mat4 translateplayer = glm::translate (glm::vec3(player.posx, player.posy,player.posz)); // glTranslatef
-	glm::mat4 scaleplayer = glm::scale (glm::vec3(0.4,0.4,0.4));
-	glm::mat4 playerTransform = translateplayer*scaleplayer;
-	Matrices.model *= playerTransform;
-	MVP = VP * Matrices.model; // MVP = p * V * M
-	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
- 	draw3DObject(player.vao);
+	
 
 	 //Rendering axises
 	Matrices.model = glm::mat4(1.0f);
@@ -836,10 +1089,37 @@ void draw ()
 	MVP = VP * Matrices.model; // MVP = p * V * M
 	glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
  	draw3DObject(axises);
-	
-	/*
 
-	// Render with texture shaders now
+ 	 // Rendering Sea
+ 	glUseProgram(textureProgramID);
+ 	for(int k = 0;k<300;k++)
+ 	{
+ 		Matrices.model = glm::mat4(1.0f);
+		glm::mat4 translatesea = glm::translate (glm::vec3(sea[k].posx,sea[k].posy,sea[k].posz)); // glTranslatef
+		glm::mat4 scalesea = glm::scale (glm::vec3(80,2,80));
+		glm::mat4 seaTransform = translatesea*scalesea;
+		Matrices.model *= seaTransform;
+		MVP = VP * Matrices.model; // MVP = p * V * M
+		glUniformMatrix4fv(Matrices.TexMatrixID, 1, GL_FALSE, &MVP[0][0]);
+		glUniform1i(glGetUniformLocation(textureProgramID, "texSampler"), 0);
+	 	draw3DTexturedObject(sea[k].vao);
+ 	}
+ 	
+	
+
+	 //Rendering Player
+ 	glUseProgram(textureProgramID);
+	Matrices.model = glm::mat4(1.0f);
+	glm::mat4 translateplayer = glm::translate (glm::vec3(player.posx, player.posy,player.posz)); // glTranslatef
+	glm::mat4 scaleplayer = glm::scale (glm::vec3(0.4,0.4,0.4));
+	glm::mat4 playerTransform = translateplayer*scaleplayer;
+	Matrices.model *= playerTransform;
+	MVP = VP * Matrices.model; // MVP = p * V * M
+	glUniformMatrix4fv(Matrices.TexMatrixID, 1, GL_FALSE, &MVP[0][0]);
+	glUniform1i(glGetUniformLocation(textureProgramID, "texSampler"), 0);
+ 	draw3DTexturedObject(player.vao);
+
+	/*// Render with texture shaders now
 	glUseProgram(textureProgramID);
 
 	// Pop matrix to undo transformations till last push matrix instead of recomputing model matrix
@@ -950,19 +1230,19 @@ void initGL (GLFWwindow* window, int width, int height)
 {
 	// Load Textures
 	// Enable Texture0 as current texture memory
-	/*glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0);
 	// load an image file directly as a new OpenGL texture
-	// GLuint texID = SOIL_load_OGL_texture ("beach.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS); // Buggy for OpenGL3
-	GLuint textureID = createTexture("beach2.png");
+	//GLuint texID = SOIL_load_OGL_texture ("beach.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS); // Buggy for OpenGL3
+	GLuint seaID = createTexture("sea.jpg");
 	// check for an error during the load process
-	if(textureID == 0 )
-		cout << "SOIL loading error: '" << SOIL_last_result() << "'" << endl;
+
+	GLuint playerID = createTexture("deepsea.png");
 
 	// Create and compile our GLSL program from the texture shaders
 	textureProgramID = LoadShaders( "TextureRender.vert", "TextureRender.frag" );
 	// Get a handle for our "MVP" uniform
 	Matrices.TexMatrixID = glGetUniformLocation(textureProgramID, "MVP");
-	*/
+	
 
 	/* Objects should be created before any other gl function and shaders */
 	// Create the models
@@ -994,9 +1274,24 @@ void initGL (GLFWwindow* window, int width, int height)
 	}
 	cubes[3].missing = true;
 	cubes[15].missing = true;
-	//cubes[17].moving = true;	
-
-	player=makeplayer(player);
+	
+	mark =0;
+	positionx = -1000;
+	positiony = -2;
+	positionz = 1000;
+	for (int j = 0; j < 30; ++j)
+	{
+		positionx =-1000;
+		for(int i=0;i<10;i++)
+		{	
+			sea[mark++] = create_sea(sea[mark],seaID,positionx,positiony,positionz);
+			positionx+=160;
+			
+	 	}
+	 	positionz-=160;
+	 }	
+	// sea[i] = create_sea(sea,seaID);
+	player = makeplayer(player,playerID);
 	// Create and compile our GLSL program from the shaders
 	programID = LoadShaders( "Sample_GL3.vert", "Sample_GL3.frag" );
 	// Get a handle for our "MVP" uniform
