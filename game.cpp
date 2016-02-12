@@ -31,7 +31,7 @@ struct VAO {
 typedef struct VAO VAO;
 
 struct CUBE {
-	GLfloat posx ,posy,posz;
+	GLfloat posx ,posy,posz,vely;
 	GLint direction;
 	bool moving,missing;
 	VAO *vao,*edges;
@@ -367,6 +367,7 @@ VAO *axises;
 CUBE cubes[100];
 PLAYER player;
 SEA sea[1000];
+int flag=0;
 
 /* Executed when a regular key is pressed/released/held-down */
 /* Prefered for Keyboard events */
@@ -783,6 +784,7 @@ CUBE createcube (CUBE cube,float positionx,float positiony,float positionz)
 	cube.posx = positionx;
 	cube.posy = positiony; 
 	cube.posz = positionz;
+	cube.vely =0;
 	cube.direction = 1;
 	cube.moving = false;
 	cube.missing = false;
@@ -905,18 +907,18 @@ CUBE movecube(CUBE cube)
 float camera_rotation_angle = 90;
 float rectangle_rotation = 0;
 float triangle_rotation = 0;
-GLfloat timenow=0,timethen=0,gravitypower = -0.1;
+GLfloat timenow=0,timethen=0,gravitypower = -0.15;
 
 
 void gravity()
 {
-	timenow = glfwGetTime();
-	player.vely += gravitypower *(timenow-timethen);
-	player.posy += player.vely;
-	//cout<<timenow<<endl;
-	timethen = timenow;
+	 timenow = glfwGetTime();
+	 player.vely += gravitypower *(timenow-timethen);
+	 player.posy += player.vely;
+	 timethen = timenow;
+	
 }
-
+int counter=0;
 
 PLAYER YouCollide(PLAYER player, CUBE cube) // AABB - Circle collision
 {
@@ -940,57 +942,70 @@ PLAYER YouCollide(PLAYER player, CUBE cube) // AABB - Circle collision
   float xot=glm::dot(difference, xaxis);
   float zot=glm::dot(difference, zaxis);
 
-
-  if (glm::length(difference) < (player.radius-0.1))
+  
+  
+  if (glm::length(difference) < 0.4)
     {
-      if( xot > 0 )
-	{
-	  cout<<"Hurray!\n";
-	  player.posx += 0.05;
-	  
-	}
-      else if( xot < 0 )
-	{
-	  cout<<"Eureka!\n";
-	  player.posx -= 0.05;
-	  
-	}
+      if( xot > 0 && cube.moving==true)
+		{
+		  cout<<"Hurray!\n";
+		  player.posx += 0.2;
+		  
+		}
+      else if( xot < 0 &&cube.moving==true)
+		{
+		  cout<<"Eureka!\n";
+		  player.posx -= 0.2;
+		  
+		}
       else
-	{
-	  if( yot > 0 )
-	    {
-	      cout<<"Yurray!\n";
-	      //if(player.posy <= 3.5)
-	      // 	player.posy =3.5;
-	      //else
-	      player.posy += 0.05;
-	  
-	    }
-	  else if( yot < 0 )
-	    {
-	      cout<<"Yureka!\n";
-	      player.posy -= 0.05;
-	    }
-	  else
-	    {
-
-	      if( zot > 0 )
 		{
-		  cout<<"Zurray!\n";
-		  player.posz += 0.05;
-	
-		}
-	      else if( zot < 0 )
-		{
-		  cout<<"Zureka!\n";
-		  player.posz -= 0.05;
-	
-		}
-	    }
+		  if( yot > 0 )
+		    {
+		        cout<<counter++<<" "<<"Yurray!\n"<<player.posy<<endl;
+		    	player.posy-=player.vely;
+		    	player.posy+=cube.vely;
+		    	player.vely =0;  	      
+		       
+		    
+		      
+		    }
+		  else if( yot < 0 )
+		    {
+		      cout<<"Yureka!\n";
+		      
+		    }
+		  else
+		    {
 
-	}
+		      //flag = 0;
+		      if( zot > 0 )
+				{
+			  		cout<<"Zurray!\n";
+			  		player.posz += 0.2;
+		
+				}
+		      else if( zot < 0 )
+				{
+			  		cout<<"Zureka!\n";
+			  		player.posz -= 0.2;
+		
+				}
+		    }
+
+		}
     }
-     return player;
+    
+    	
+    return player;
+}
+
+void restartplayer()
+{
+	player.posx=cubes[0].posx;
+	player.posy = cubes[0].posy +3.5;
+	player.posz = cubes[0].posz ;
+	player.vely =0;
 }
 void draw ()
 {
@@ -1034,7 +1049,7 @@ void draw ()
 	else if(playerview == true)
 	{
 		eyex = player.posx;
-		eyey = player.posy +5 ;
+		eyey = player.posy + 5;
 		eyez = player.posz + 7 ;
 		tarx =player.posx;
 		tary =player.posy;
@@ -1048,23 +1063,16 @@ void draw ()
 	glm::mat4 VP = Matrices.projection * Matrices.view;
 	glm::mat4 MVP;	
 
-	if(player.posy <= cubes[0].posy+4)
-	{
-		player.vely =0;
-		gravitypower=0;
-	}
-	else
-	{
-		player.gravitypower = -0.1;
-		gravity();
-	}
+	gravity();
 	//Rendering cubes
 	
+	//flag=0;
 	for (int j = 0; j < 100; ++j)
 	{
+		
 		if(cubes[j].missing == false)
 		{
-			if(cubes[j].moving == true)
+				if(cubes[j].moving == true)
 				cubes[j] = movecube(cubes[j]);
 			Matrices.model = glm::mat4(1.0f);
 			glm::mat4 translatecube = glm::translate (glm::vec3(cubes[j].posx, cubes[j].posy, cubes[j].posz)); 
@@ -1076,9 +1084,10 @@ void draw ()
 		 	draw3DObject(cubes[j].vao);
 		 	player = YouCollide(player,cubes[j]);
 		 	
+		 	
 	 	}
 	 }	
-
+	 
 	
 
 	 //Rendering axises
@@ -1105,7 +1114,8 @@ void draw ()
 	 	draw3DTexturedObject(sea[k].vao);
  	}
  	
-	
+	if(player.posy <= 2)
+		restartplayer();
 
 	 //Rendering Player
  	glUseProgram(textureProgramID);
@@ -1270,7 +1280,11 @@ void initGL (GLFWwindow* window, int width, int height)
 	{
 		int cube_no = rand() %100;
 		if(cube_no >9 && cube_no<90)
+		{
 			cubes[cube_no].moving = true;
+			cubes[cube_no].vely = 0.07;
+		}
+
 	}
 	cubes[3].missing = true;
 	cubes[15].missing = true;
