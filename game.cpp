@@ -34,7 +34,7 @@ struct CUBE {
 	GLfloat posx ,posy,posz,vely;
 	GLint direction;
 	bool moving,missing;
-	VAO *vao,*edges;
+	VAO *vao,*top;
 };
 typedef struct CUBE CUBE;
 
@@ -363,6 +363,7 @@ GLfloat eyex ,eyey ,eyez ,tarx,tary,tarz;
 bool topview = false;
 bool playerview = true;
 bool towerview =false;
+bool is_collide =false;
 VAO *axises;
 CUBE cubes[100];
 PLAYER player;
@@ -406,26 +407,24 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 				changeview();
 				break;
 			case GLFW_KEY_UP:
-				player.posz -= 0.2;
-				if(player.posz < cubes[99].posz)
-					player.posz = cubes[99].posz;
+				player.velz = -0.1;
 				break;
 			case GLFW_KEY_DOWN:
-				player.posz += 0.2;
-				if(player.posz > cubes[1].posz)
-					player.posz = cubes[1].posz;
+				player.velz = 0.1;
+				
 				break;
 			case GLFW_KEY_LEFT:
-				player.posx -= 0.2;
-				if(player.posx < cubes[0].posx)
-					player.posx = cubes[0].posx;
+				player.velx = -0.1;
+				
 				break;
 			case GLFW_KEY_RIGHT:
-				player.posx += 0.2;
-				if(player.posx > cubes[9].posx)
-					player.posx = cubes[9].posx;
+				player.velx = 0.1;
+				
 				break;
-
+			case GLFW_KEY_SPACE :
+				if(is_collide == true)
+					player.vely += 0.1;
+				break;
 			default:
 				break;
 		}
@@ -433,30 +432,49 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	else if (action == GLFW_REPEAT) {
         switch (key) {
             case GLFW_KEY_UP:
-				player.posz -= 0.2;
-				if(player.posz < cubes[99].posz)
-					player.posz = cubes[99].posz;
+				player.velz = -0.1;
+				
 				break;
 			case GLFW_KEY_DOWN:
-				player.posz += 0.2;
-				if(player.posz > cubes[1].posz)
-					player.posz = cubes[1].posz;
+				player.velz = 0.1;
+				
 				break;
 			case GLFW_KEY_LEFT:
-				player.posx -= 0.2;
-				if(player.posx < cubes[0].posx)
-					player.posx = cubes[0].posx;
+				player.velx = -0.1;
+				
 				break;
 			case GLFW_KEY_RIGHT:
-				player.posx += 0.2;
-				if(player.posx > cubes[9].posx)
-					player.posx = cubes[9].posx;
+				player.velx = 0.1;
+				
 				break;
-
+			
 			default:
 				break;
         }
     }
+
+    else if (action == GLFW_RELEASE) {
+		switch (key) {
+			case GLFW_KEY_UP:
+				player.velz =0;
+				
+				break;
+			case GLFW_KEY_DOWN:
+				player.velz = 0;
+				
+				break;
+			case GLFW_KEY_LEFT:
+				player.velx = 0;
+				break;
+			case GLFW_KEY_RIGHT:
+				player.velx = 0;
+
+				break;
+			
+			default:
+				break;
+		}
+	}
 }
 
 /* Executed for character input (like in text boxes) */
@@ -779,7 +797,7 @@ SEA create_sea(SEA sea ,GLuint textureID,GLfloat x,GLfloat y,GLfloat z){
 	sea.vao = create3DTexturedObject(GL_TRIANGLES, 36, vertex_buffer_data, texture_buffer_data, textureID, GL_FILL);
 	return sea;
 }
-CUBE createcube (CUBE cube,float positionx,float positiony,float positionz)
+CUBE createcube (CUBE cube,float positionx,float positiony,float positionz,GLuint textureID)
 {
 	cube.posx = positionx;
 	cube.posy = positiony; 
@@ -876,19 +894,115 @@ CUBE createcube (CUBE cube,float positionx,float positiony,float positionz)
 		0.35,0.16,0.14,
 		0.35,0.16,0.14,
 	};
-	// Texture coordinates start with (0,0) at top left of the image to (1,1) at bot right
-	// static const GLfloat texture_buffer_data [] = {
-	// 	0,1, // TexCoord 1 - bot left
-	// 	1,1, // TexCoord 2 - bot right
-	// 	1,0, // TexCoord 3 - top right
 
-	// 	1,0, // TexCoord 3 - top right
-	// 	0,0, // TexCoord 4 - top left
-	// 	0,1  // TexCoord 1 - bot left
-	// };
+	int length=2,width=2,height=2;	
+	static const GLfloat vertex_buffer_data2 [] = {
+			 //left face
+	    -length/2,height/2,width/2, // vertex 1
+	    -length/2,-height/2,width/2, // vertex 2
+	    -length/2,-height/2,-width/2, // vertex 3
 
-	// create3DTexturedObject creates and returns a handle to a VAO that can be used later
+	    -length/2,height/2,width/2, // vertex 1
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,height/2,-width/2, //vertex 4
+
+	    //front face
+	    -length/2,height/2,width/2, // vertex 1
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,-height/2,width/2, // vertex 2
+
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,-height/2,width/2, // vertex 2
+	    length/2,-height/2,width/2, //vertex 6
+	    
+	    //top face
+	    -length/2,height/2,width/2, // vertex 1
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,height/2,-width/2, //vertex 4
+	    
+	    length/2,height/2,width/2, // vertex 5
+	    -length/2,height/2,-width/2, //vertex 4
+	    length/2,height/2,-width/2, // vertex 7
+
+	    //right face
+	    length/2,height/2,width/2, // vertex 5
+	    length/2,-height/2,width/2, //vertex 6
+	    length/2,height/2,-width/2, // vertex 7
+
+	    length/2,-height/2,width/2, //vertex 6
+	    length/2,height/2,-width/2, // vertex 7
+	    length/2,-height/2,-width/2, //vertex 8
+
+	    //Back face
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,height/2,-width/2, //vertex 4
+	    length/2,height/2,-width/2, // vertex 7
+
+	    -length/2,-height/2,-width/2, // vertex 3
+	    length/2,-height/2,-width/2, //vertex 8
+	    length/2,height/2,-width/2, // vertex 7
+
+	    //Bottom face
+	    -length/2,-height/2,-width/2, // vertex 3
+	    length/2,-height/2,-width/2, //vertex 8
+	    length/2,-height/2,width/2, //vertex 6
+
+	    -length/2,-height/2,-width/2, // vertex 3
+	    -length/2,-height/2,width/2, // vertex 2
+	    length/2,-height/2,width/2 //vertex 6
+	};
+	
+	static const GLfloat texture_buffer_data [] = {
+		0,1, 
+		1,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+
+		1,1, 
+		0,1, 
+		1,0, 
+
+		0,1,  
+		1,0, 
+		0,0, 
+	};
 	cube.vao = create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_FILL);
+	cube.top =create3DTexturedObject(GL_TRIANGLES,36,vertex_buffer_data2,texture_buffer_data,textureID,GL_FILL);
 	return cube;
 	
 }
@@ -899,7 +1013,7 @@ CUBE movecube(CUBE cube)
 	cube.posy+=(0.07*cube.direction);
 	if(cube.posy >2)
 		cube.direction*=-1;
-	if(cube.posy < -2)
+	if(cube.posy < -4)
 		cube.direction*=-1;
 	return cube;
 
@@ -907,20 +1021,35 @@ CUBE movecube(CUBE cube)
 float camera_rotation_angle = 90;
 float rectangle_rotation = 0;
 float triangle_rotation = 0;
-GLfloat timenow=0,timethen=0,gravitypower = -0.15;
+GLfloat timenow=0,timethen=0,gravitypower = -0.25;
 
 
 void gravity()
 {
 	 timenow = glfwGetTime();
 	 player.vely += gravitypower *(timenow-timethen);
-	 player.posy += player.vely;
+	 // player.posy += player.vely;
 	 timethen = timenow;
 	
 }
-int counter=0;
 
-PLAYER YouCollide(PLAYER player, CUBE cube) // AABB - Circle collision
+void updateplayer()
+{
+	player.posx +=player.velx;
+	player.posy += player.vely;
+	player.posz += player.velz;
+	if(player.posz < cubes[99].posz-0.5)
+		player.posz = cubes[99].posz-0.5;
+	if(player.posz > cubes[1].posz+0.5)
+		player.posz = cubes[1].posz+0.5;
+	if(player.posx < cubes[0].posx-0.5)
+		player.posx = cubes[0].posx-0.5;
+	if(player.posx > cubes[9].posx+0.5)
+		player.posx = cubes[9].posx+0.5;
+
+}
+
+PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
 {
   // Get center point circle first 
   glm::vec3 center(player.posx,player.posy,player.posz);
@@ -962,11 +1091,11 @@ PLAYER YouCollide(PLAYER player, CUBE cube) // AABB - Circle collision
 		{
 		  if( yot > 0 )
 		    {
-		        cout<<counter++<<" "<<"Yurray!\n"<<player.posy<<endl;
+		        cout<<" "<<"Yurray!\n"<<player.posy<<endl;
 		    	player.posy-=player.vely;
 		    	player.posy+=cube.vely;
 		    	player.vely =0;  	      
-		       
+		  		is_collide = true;     
 		    
 		      
 		    }
@@ -1013,7 +1142,7 @@ void draw ()
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram (programID);
 	glm::vec3 up (0, 1, 0);
-
+	is_collide = false;
 	if(towerview == true)
 	{
 		if(eyex < 12)
@@ -1064,6 +1193,7 @@ void draw ()
 	glm::mat4 MVP;	
 
 	gravity();
+	updateplayer();
 	//Rendering cubes
 	
 	//flag=0;
@@ -1072,6 +1202,7 @@ void draw ()
 		
 		if(cubes[j].missing == false)
 		{
+			glUseProgram (programID);
 				if(cubes[j].moving == true)
 				cubes[j] = movecube(cubes[j]);
 			Matrices.model = glm::mat4(1.0f);
@@ -1082,13 +1213,25 @@ void draw ()
 			MVP = VP * Matrices.model; // MVP = p * V * M
 			glUniformMatrix4fv(Matrices.MatrixID, 1, GL_FALSE, &MVP[0][0]);
 		 	draw3DObject(cubes[j].vao);
-		 	player = YouCollide(player,cubes[j]);
+		 	player = collision(player,cubes[j]);
+
+		 	glUseProgram(textureProgramID);
+		 	Matrices.model = glm::mat4(1.0f);
+
+			glm::mat4 translatetop = glm::translate (glm::vec3(cubes[j].posx, cubes[j].posy+3, cubes[j].posz)); 
+			glm::mat4 scaletop = glm::scale (glm::vec3(1,0.005,1));
+			glm::mat4 topTransform = translatetop*scaletop;
+			Matrices.model *= topTransform;
+			MVP = VP * Matrices.model; // MVP = p * V * M
+			glUniformMatrix4fv(Matrices.TexMatrixID, 1, GL_FALSE, &MVP[0][0]);
+			glUniform1i(glGetUniformLocation(textureProgramID, "texSampler"), 0);
+		 	draw3DTexturedObject(cubes[j].top);
 		 	
 		 	
 	 	}
 	 }	
 	 
-	
+	glUseProgram (programID);
 
 	 //Rendering axises
 	Matrices.model = glm::mat4(1.0f);
@@ -1114,7 +1257,7 @@ void draw ()
 	 	draw3DTexturedObject(sea[k].vao);
  	}
  	
-	if(player.posy <= 2)
+	if(player.posy <= 0)
 		restartplayer();
 
 	 //Rendering Player
@@ -1131,25 +1274,19 @@ void draw ()
 
 	/*// Render with texture shaders now
 	glUseProgram(textureProgramID);
-
 	// Pop matrix to undo transformations till last push matrix instead of recomputing model matrix
 	// glPopMatrix ();
 	Matrices.model = glm::mat4(1.0f);
-
 	glm::mat4 translateRectangle = glm::translate (glm::vec3(2, 0, 0));        // glTranslatef
 	//glm::mat4 rotateRectangle = glm::rotate((float)(rectangle_rotation*M_PI/180.0f), glm::vec3(0,0,1)); // rotate about vector (-1,1,1)
 	Matrices.model *= (translateRectangle);
 	MVP = VP * Matrices.model;
-
 	// Copy MVP to texture shaders
 	glUniformMatrix4fv(Matrices.TexMatrixID, 1, GL_FALSE, &MVP[0][0]);
-
 	// Set the texture sampler to access Texture0 memory
 	glUniform1i(glGetUniformLocation(textureProgramID, "texSampler"), 0);
-
 	// draw3DObject draws the VAO given to it using current MVP matrix
 	draw3DTexturedObject(rectangle);
-
 	// Increment angles
 	float increments = 1;
 */
@@ -1157,13 +1294,9 @@ void draw ()
 	static int fontScale = 0;
 	float fontScaleValue = 0.75 + 0.25*sinf(fontScale*M_PI/180.0f);
 	glm::vec3 fontColor = getRGBfromHue (fontScale);
-
-
-
 	// Use font Shaders for next part of code
 	glUseProgram(fontProgramID);
 	Matrices.view = glm::lookAt(glm::vec3(0,0,3), glm::vec3(0,0,0), glm::vec3(0,1,0)); // Fixed camera for 2D (ortho) in XY plane
-
 	// Transform the text
 	Matrices.model = glm::mat4(1.0f);
 	glm::mat4 translateText = glm::translate(glm::vec3(-3,2,0));
@@ -1173,7 +1306,6 @@ void draw ()
 	// send font's MVP and font color to fond shaders
 	glUniformMatrix4fv(GL3Font.fontMatrixID, 1, GL_FALSE, &MVP[0][0]);
 	glUniform3fv(GL3Font.fontColorID, 1, &fontColor[0]);
-
 	// Render font
 	GL3Font.font->Render("Round n Round we go !!");
     */
@@ -1191,72 +1323,42 @@ void draw ()
 GLFWwindow* initGLFW (int width, int height)
 {
 	GLFWwindow* window; // window desciptor/handle
-
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit()) {
 		exit(EXIT_FAILURE);
 	}
-
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
 	window = glfwCreateWindow(width, height, "Sample OpenGL 3.3 Application", NULL, NULL);
-
 	if (!window) {
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
-
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glfwSwapInterval( 1 );
-
-	/* --- register callbacks with GLFW --- */
-
-	/* Register function to handle window resizes */
-	/* With Retina display on Mac OS X GLFW's FramebufferSize
-	 is different from WindowSize */
 	glfwSetFramebufferSizeCallback(window, reshapeWindow);
 	glfwSetWindowSizeCallback(window, reshapeWindow);
-
-	/* Register function to handle window close */
 	glfwSetWindowCloseCallback(window, quit);
-
-	/* Register function to handle keyboard input */
 	glfwSetKeyCallback(window, keyboard);      // general keyboard input
 	glfwSetCharCallback(window, keyboardChar);  // simpler specific character handling
-
-	/* Register function to handle mouse click */
 	glfwSetMouseButtonCallback(window, mouseButton);  // mouse button clicks
-
 	return window;
 }
 
-/* Initialize the OpenGL rendering properties */
-/* Add all the models to be created here */
+
+
 void initGL (GLFWwindow* window, int width, int height)
 {
-	// Load Textures
-	// Enable Texture0 as current texture memory
 	glActiveTexture(GL_TEXTURE0);
-	// load an image file directly as a new OpenGL texture
-	//GLuint texID = SOIL_load_OGL_texture ("beach.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS); // Buggy for OpenGL3
-	GLuint seaID = createTexture("sea.jpg");
-	// check for an error during the load process
-
-	GLuint playerID = createTexture("deepsea.png");
-
-	// Create and compile our GLSL program from the texture shaders
+	GLuint seaID = createTexture("lava.png");
+	GLuint playerID = createTexture("textures.jpg");
+	GLuint topID = createTexture("lava2.jpg");
 	textureProgramID = LoadShaders( "TextureRender.vert", "TextureRender.frag" );
-	// Get a handle for our "MVP" uniform
 	Matrices.TexMatrixID = glGetUniformLocation(textureProgramID, "MVP");
-	
 
-	/* Objects should be created before any other gl function and shaders */
-	// Create the models
-	// Generate the VAO, VBOs, vertices data & copy into the array buffer
 	createaxis();
 
 	int mark = 0;
@@ -1266,26 +1368,59 @@ void initGL (GLFWwindow* window, int width, int height)
 		positionx =-10;
 		for(int i=0;i<10;i++)
 		{	
-			cubes[mark++] = createcube(cubes[mark],positionx,positiony,positionz);
+			cubes[mark++] = createcube(cubes[mark],positionx,positiony,positionz,topID);
 			positionx+=2.1;
 			
 	 	}
 	 	positionz-=2.1;
+
+	 	int moving_cube1=0;
+	 	int missing_cube1=0;
+	 	while(moving_cube1 == 0 || missing_cube1 == 0)
+	 	{
+	 		moving_cube1 = rand() %10;
+	 		missing_cube1 = rand() %10;
+	 	}
+	 	cubes[j*10+missing_cube1].missing = true;
+	 	cubes[j*10+moving_cube1].moving = true;
+	 	cubes[j*10+moving_cube1].vely = 0.07;
+		cubes[j*10+moving_cube1].posy = rand() %4 -2;
+		cubes[j*10+moving_cube1].direction = pow(-1,rand() %2);
+	 	
+	 	int moving_cube2 = moving_cube1;
+	 	int missing_cube2 = missing_cube1;
+	 	while(moving_cube2 == moving_cube1 || missing_cube2 == missing_cube1)
+	 	{
+	 			moving_cube2= rand() %10;
+		 		missing_cube2=rand() %10;
+		 	
+	 	}
+	 	while(moving_cube2 ==0 || missing_cube2==0)
+	 	{
+	 		moving_cube2= rand() %10;
+		 	missing_cube2=rand() %10;
+	 	}
+	 	cubes[j*10+missing_cube2].missing = true;
+	 	cubes[j*10+moving_cube2].moving = true;
+	 	cubes[j*10+moving_cube2].vely = 0.07;
+	 	cubes[j*10+moving_cube2].posy = rand() %4 -2;
+	 	cubes[j*10+moving_cube2].direction = pow(-1,rand() %2);
 	 }	
 
-	 int no_of_moving_cubes =0;
-	while(no_of_moving_cubes < 10)
-		no_of_moving_cubes = rand() % 30;
-	for (int i = 0; i < no_of_moving_cubes; ++i)
-	{
-		int cube_no = rand() %100;
-		if(cube_no >9 && cube_no<90)
-		{
-			cubes[cube_no].moving = true;
-			cubes[cube_no].vely = 0.07;
-		}
+	//  int no_of_moving_cubes =0;
+	// while(no_of_moving_cubes < 10)
+	// 	no_of_moving_cubes = rand() % 30;
+	// for (int i = 0; i < no_of_moving_cubes; ++i)
+	// {
+	// 	int cube_no = rand() %100;
+	// 	if(cube_no >9 && cube_no<90)
+	// 	{
+	// 		cubes[cube_no].moving = true;
+	// 		cubes[cube_no].vely = 0.07;
+	// 		cubes[cube_no].posy = rand() %4 -2;
+	// 	}
 
-	}
+	// }
 	cubes[3].missing = true;
 	cubes[15].missing = true;
 	
