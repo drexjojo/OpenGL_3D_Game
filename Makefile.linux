@@ -5,3 +5,5 @@ sample2D: Sample_GL3_2D.cpp glad.c
 
 clean:
 	rm sample2D
+
+alias gamer="g++ -o game game.cpp glad.c -lGL -lglfw -lftgl -lSOIL -ldl -I/usr/include/freetype2 -I/usr/include -I"irrklang/include" -I"/usr/lib" irrklang/bin/linux-gcc-64/libIrrKlang.so -Lirrklang/bin/dotnet-4-64/ikpMP3.dll -pthread"

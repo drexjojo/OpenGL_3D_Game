@@ -1,3 +1,5 @@
+// Header Files
+#include <unistd.h>
 #include <iostream>
 #include <cmath>
 #include <fstream>
@@ -7,16 +9,18 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
+#include <irrKlang.h>
 #include <glad/glad.h>
 #include <FTGL/ftgl.h>
 #include <GLFW/glfw3.h>
 #include <SOIL/SOIL.h>
-
+#define PI 3.141592653589
 using namespace std;
 
+irrklang::ISoundEngine *SoundEngine = irrklang::createIrrKlangDevice();
 GLfloat fov = 70;
 
+//Structures
 struct VAO {
 	GLuint VertexArrayID;
 	GLuint VertexBuffer;
@@ -361,7 +365,8 @@ bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
 GLfloat eyex ,eyey ,eyez ,tarx,tary,tarz;
 bool topview = false;
-bool playerview = true;
+bool followview = true;
+bool playerview = false;
 bool towerview =false;
 bool is_collide =false;
 VAO *axises;
@@ -370,30 +375,39 @@ PLAYER player;
 SEA sea[1000];
 int flag=0;
 
-/* Executed when a regular key is pressed/released/held-down */
-/* Prefered for Keyboard events */
-
+// To change the view
 void changeview()
 {
 	if(towerview == true)
 	{
 		towerview = false;
+		followview = false;
 		playerview = false;
 		topview = true;
 	}
 	else if (topview == true)
 	{
 		topview = false;
-		playerview = true;
+		followview = true;
 		towerview = false;
+		playerview = false;
+	}
+	else if (followview == true)
+	{
+		topview = false;
+		followview = false;
+		towerview = false;
+		playerview = true;
 	}
 	else if (playerview == true)
 	{
 		topview = false;
-		playerview = false;
+		followview = false;
 		towerview = true;
+		playerview = false;
 	}
 }
+
 void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	// Function is called first on GLFW_PRESS.
@@ -406,24 +420,27 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 			case GLFW_KEY_T:
 				changeview();
 				break;
-			case GLFW_KEY_UP:
+			case GLFW_KEY_W:
 				player.velz = -0.1;
 				break;
-			case GLFW_KEY_DOWN:
+			case GLFW_KEY_S:
 				player.velz = 0.1;
 				
 				break;
-			case GLFW_KEY_LEFT:
+			case GLFW_KEY_A:
 				player.velx = -0.1;
 				
 				break;
-			case GLFW_KEY_RIGHT:
+			case GLFW_KEY_D:
 				player.velx = 0.1;
 				
 				break;
 			case GLFW_KEY_SPACE :
 				if(is_collide == true)
+				{
+					SoundEngine->play2D("blurp.wav", GL_FALSE);
 					player.vely += 0.1;
+				}
 				break;
 			default:
 				break;
@@ -431,19 +448,19 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	}
 	else if (action == GLFW_REPEAT) {
         switch (key) {
-            case GLFW_KEY_UP:
+            case GLFW_KEY_W:
 				player.velz = -0.1;
 				
 				break;
-			case GLFW_KEY_DOWN:
+			case GLFW_KEY_S:
 				player.velz = 0.1;
 				
 				break;
-			case GLFW_KEY_LEFT:
+			case GLFW_KEY_A:
 				player.velx = -0.1;
 				
 				break;
-			case GLFW_KEY_RIGHT:
+			case GLFW_KEY_D:
 				player.velx = 0.1;
 				
 				break;
@@ -455,18 +472,18 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 
     else if (action == GLFW_RELEASE) {
 		switch (key) {
-			case GLFW_KEY_UP:
+			case GLFW_KEY_W:
 				player.velz =0;
 				
 				break;
-			case GLFW_KEY_DOWN:
+			case GLFW_KEY_S:
 				player.velz = 0;
 				
 				break;
-			case GLFW_KEY_LEFT:
+			case GLFW_KEY_A:
 				player.velx = 0;
 				break;
-			case GLFW_KEY_RIGHT:
+			case GLFW_KEY_D:
 				player.velx = 0;
 
 				break;
@@ -508,6 +525,23 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
+double prev_x = 0 ,prev_y=0,angle=0;
+void mousePosition (GLFWwindow* window, double xpos, double ypos)
+{
+	
+	if(xpos < prev_x)
+	{
+		angle -=1;
+		prev_x = xpos;
+		
+	}
+	else if (xpos > prev_x)
+	{
+		angle +=1;
+		prev_x = xpos;
+		
+	}
+}
 
 /* Executed when window is resized to 'width' and 'height' */
 /* Modify the bounds of the screen here in glm::ortho or Field of View in glm::Perspective */
@@ -563,7 +597,7 @@ void createaxis ()
 }
 
 
-// Creates the rectangle object used in this sample code
+// Creates the player object
 
 PLAYER makeplayer(PLAYER player,GLuint textureID)
 {
@@ -684,6 +718,7 @@ PLAYER makeplayer(PLAYER player,GLuint textureID)
 	return player;
 }
 
+// Createds the lava sea
 SEA create_sea(SEA sea ,GLuint textureID,GLfloat x,GLfloat y,GLfloat z){
 	int length =2,width=2,height=2;
 	sea.posx =x;
@@ -797,6 +832,8 @@ SEA create_sea(SEA sea ,GLuint textureID,GLfloat x,GLfloat y,GLfloat z){
 	sea.vao = create3DTexturedObject(GL_TRIANGLES, 36, vertex_buffer_data, texture_buffer_data, textureID, GL_FILL);
 	return sea;
 }
+
+// Creates the cube
 CUBE createcube (CUBE cube,float positionx,float positiony,float positionz,GLuint textureID)
 {
 	cube.posx = positionx;
@@ -1007,7 +1044,7 @@ CUBE createcube (CUBE cube,float positionx,float positiony,float positionz,GLuin
 	
 }
 
-
+// Moving the cube
 CUBE movecube(CUBE cube)
 {
 	cube.posy+=(0.07*cube.direction);
@@ -1023,7 +1060,7 @@ float rectangle_rotation = 0;
 float triangle_rotation = 0;
 GLfloat timenow=0,timethen=0,gravitypower = -0.25;
 
-
+// gravity
 void gravity()
 {
 	 timenow = glfwGetTime();
@@ -1049,6 +1086,7 @@ void updateplayer()
 
 }
 
+// Detecting collisions
 PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
 {
   // Get center point circle first 
@@ -1077,13 +1115,13 @@ PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
     {
       if( xot > 0 && cube.moving==true)
 		{
-		  cout<<"Hurray!\n";
+		  
 		  player.posx += 0.2;
 		  
 		}
       else if( xot < 0 &&cube.moving==true)
 		{
-		  cout<<"Eureka!\n";
+		  
 		  player.posx -= 0.2;
 		  
 		}
@@ -1091,7 +1129,7 @@ PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
 		{
 		  if( yot > 0 )
 		    {
-		        cout<<" "<<"Yurray!\n"<<player.posy<<endl;
+		        
 		    	player.posy-=player.vely;
 		    	player.posy+=cube.vely;
 		    	player.vely =0;  	      
@@ -1101,22 +1139,22 @@ PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
 		    }
 		  else if( yot < 0 )
 		    {
-		      cout<<"Yureka!\n";
+		      
 		      
 		    }
 		  else
 		    {
 
-		      //flag = 0;
+		      
 		      if( zot > 0 )
 				{
-			  		cout<<"Zurray!\n";
+			  		
 			  		player.posz += 0.2;
 		
 				}
 		      else if( zot < 0 )
 				{
-			  		cout<<"Zureka!\n";
+			  		
 			  		player.posz -= 0.2;
 		
 				}
@@ -1128,9 +1166,11 @@ PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
     	
     return player;
 }
-
+//Restarting player
 void restartplayer()
 {
+	SoundEngine->play2D("bubbling1.wav", GL_FALSE);
+	sleep(1);
 	player.posx=cubes[0].posx;
 	player.posy = cubes[0].posy +3.5;
 	player.posz = cubes[0].posz ;
@@ -1162,20 +1202,20 @@ void draw ()
 	{
 		if(eyex > 0)
 			eyex -=0.3;
-		// eyex=0;
+		
 		if(eyey < 30)
 			eyey+=0.3;
-		// eyey=30;
+		
 		if(eyez < 1)
 			eyez+=0.3;
-		// eyez=1;
+		
 		tarx = 0;
 		tary=0;
 		tarz=0;
 		fov = 70.2;
 	}
 
-	else if(playerview == true)
+	else if(followview == true)
 	{
 		eyex = player.posx;
 		eyey = player.posy + 5;
@@ -1185,6 +1225,20 @@ void draw ()
 		tarz =player.posz;
 
 	}
+
+	else if(playerview == true)
+	{
+
+		eyex = player.posx;
+		eyey = player.posy+1;
+		eyez = player.posz;
+		
+		tarx = player.posx + 3 *sin(angle*PI/180);
+		
+		tary = 4;
+		tarz = player.posz - 3 *cos(angle*PI/180);
+		
+	}	
 	glm::vec3 eye (eyex,eyey,eyez);
 	glm::vec3 target (tarx, tary, tarz);
 	Matrices.view = glm::lookAt(eye,target,up); // Fixed camera for 2D (ortho) in XY plane
@@ -1336,7 +1390,7 @@ GLFWwindow* initGLFW (int width, int height)
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
-	glfwMakeContextCurrent(window);
+		glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glfwSwapInterval( 1 );
 	glfwSetFramebufferSizeCallback(window, reshapeWindow);
@@ -1345,10 +1399,10 @@ GLFWwindow* initGLFW (int width, int height)
 	glfwSetKeyCallback(window, keyboard);      // general keyboard input
 	glfwSetCharCallback(window, keyboardChar);  // simpler specific character handling
 	glfwSetMouseButtonCallback(window, mouseButton);  // mouse button clicks
+	glfwSetCursorPosCallback(window, mousePosition); //mouse movement
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	return window;
 }
-
-
 
 void initGL (GLFWwindow* window, int width, int height)
 {
@@ -1395,10 +1449,13 @@ void initGL (GLFWwindow* window, int width, int height)
 		 		missing_cube2=rand() %10;
 		 	
 	 	}
-	 	while(moving_cube2 ==0 || missing_cube2==0)
-	 	{
-	 		moving_cube2= rand() %10;
-		 	missing_cube2=rand() %10;
+	 	if(j==0)
+	 	{	
+		 	while(moving_cube2 ==0 || missing_cube2==0)
+		 	{
+		 		moving_cube2= rand() %10;
+			 	missing_cube2=rand() %10;
+		 	}
 	 	}
 	 	cubes[j*10+missing_cube2].missing = true;
 	 	cubes[j*10+moving_cube2].moving = true;
@@ -1491,6 +1548,7 @@ void initGL (GLFWwindow* window, int width, int height)
 
 }
 
+// Main Function
 int main (int argc, char** argv)
 {
 	int width = 1600;
