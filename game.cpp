@@ -363,7 +363,7 @@ float triangle_rot_dir = 1;
 float rectangle_rot_dir = -1;
 bool triangle_rot_status = true;
 bool rectangle_rot_status = true;
-GLfloat eyex ,eyey ,eyez ,tarx,tary,tarz;
+GLfloat eyex ,eyey ,eyez ,tarx,tary,tarz ,angx=0,angz=90;
 bool topview = false;
 bool followview = true;
 bool playerview = false;
@@ -421,18 +421,81 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 				changeview();
 				break;
 			case GLFW_KEY_W:
-				player.velz = -0.1;
+				if(playerview == true || followview == true)
+				{	
+					glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+  					glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+					glm::vec3 eye (eyex,eyey,eyez);
+					glm::vec3 target (tarx, tary, tarz);
+					glm::vec3 difference = target - eye;
+					angx = glm::dot(difference,xaxis);
+					angz = glm::dot(difference,zaxis);
+					player.velz = 0.02;
+					player.velx = 0.02;
+					player.velz *= angz;
+					player.velx *= angx;
+				}
+				else
+					player.velz = -0.1;
 				break;
 			case GLFW_KEY_S:
-				player.velz = 0.1;
-				
+				if(playerview == true || followview == true )
+				{	
+					glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+  					glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+					glm::vec3 eye (eyex,eyey,eyez);
+					glm::vec3 target (tarx, tary, tarz);
+					glm::vec3 difference = target - eye;
+					angx = glm::dot(difference,xaxis);
+					angz = glm::dot(difference,zaxis);
+					player.velz = 0.02;
+					player.velx = 0.02;
+					player.velz *= -angz;
+					player.velx *= -angx;
+				}
+				else
+					player.velz = 0.1;
 				break;
 			case GLFW_KEY_A:
-				player.velx = -0.1;
+				if(playerview == true || followview == true)
+				{	
+					glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+  					glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+  					glm::vec3 yaxis( 0.0, 1.0 ,0.0);
+					glm::vec3 eye (eyex,eyey,eyez);
+					glm::vec3 target (tarx, tary, tarz);
+					glm::vec3 difference = target - eye;
+					glm::vec3 perpendicular = glm::cross(difference,yaxis);
+					angx = glm::dot(perpendicular,xaxis);
+					angz = glm::dot(perpendicular,zaxis);
+					player.velz = 0.02;
+					player.velx = 0.02;
+					player.velz *= -angz;
+					player.velx *= -angx;
+				}
+				else
+					player.velx = -0.1;
 				
 				break;
 			case GLFW_KEY_D:
-				player.velx = 0.1;
+				if(playerview == true || followview == true)
+				{	
+					glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+  					glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+  					glm::vec3 yaxis( 0.0, 1.0 ,0.0);
+					glm::vec3 eye (eyex,eyey,eyez);
+					glm::vec3 target (tarx, tary, tarz);
+					glm::vec3 difference = target - eye;
+					glm::vec3 perpendicular = glm::cross(difference,yaxis);
+					angx = glm::dot(perpendicular,xaxis);
+					angz = glm::dot(perpendicular,zaxis);
+					player.velz = 0.02;
+					player.velx = 0.02;
+					player.velz *= angz;
+					player.velx *= angx;
+				}
+				else
+					player.velx = 0.1;
 				
 				break;
 			case GLFW_KEY_SPACE :
@@ -449,19 +512,82 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 	else if (action == GLFW_REPEAT) {
         switch (key) {
             case GLFW_KEY_W:
-				player.velz = -0.1;
-				
+				if(playerview == true || followview == true)
+				{	
+					glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+  					glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+					glm::vec3 eye (eyex,eyey,eyez);
+					glm::vec3 target (tarx, tary, tarz);
+					glm::vec3 difference = target - eye;
+					angx = glm::dot(difference,xaxis);
+					angz = glm::dot(difference,zaxis);
+					player.velz = 0.02;
+					player.velx = 0.02;
+					player.velz *= angz;
+					player.velx *= angx;
+				}
+				else
+					player.velz = -0.1;
 				break;
+				
 			case GLFW_KEY_S:
-				player.velz = 0.1;
-				
+				if(playerview == true || followview == true)
+				{	
+					glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+  					glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+					glm::vec3 eye (eyex,eyey,eyez);
+					glm::vec3 target (tarx, tary, tarz);
+					glm::vec3 difference = target - eye;
+					angx = glm::dot(difference,xaxis);
+					angz = glm::dot(difference,zaxis);
+					player.velz = 0.02;
+					player.velx = 0.02;
+					player.velz *= -angz;
+					player.velx *= -angx;
+				}
+				else
+					player.velz = -0.1;
 				break;
-			case GLFW_KEY_A:
-				player.velx = -0.1;
 				
+			case GLFW_KEY_A:
+				if(playerview == true || followview == true )
+				{	
+					glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+  					glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+  					glm::vec3 yaxis( 0.0, 1.0 ,0.0);
+					glm::vec3 eye (eyex,eyey,eyez);
+					glm::vec3 target (tarx, tary, tarz);
+					glm::vec3 difference = target - eye;
+					glm::vec3 perpendicular = glm::cross(difference,yaxis);
+					angx = glm::dot(perpendicular,xaxis);
+					angz = glm::dot(perpendicular,zaxis);
+					player.velz = 0.02;
+					player.velx = 0.02;
+					player.velz *= -angz;
+					player.velx *= -angx;
+				}
+				else
+					player.velx = -0.1;
 				break;
 			case GLFW_KEY_D:
-				player.velx = 0.1;
+				if(playerview == true || followview == true)
+				{	
+					glm::vec3 xaxis( 1.0, 0.0 ,0.0);
+  					glm::vec3 zaxis( 0.0, 0.0 ,1.0);
+  					glm::vec3 yaxis( 0.0, 1.0 ,0.0);
+					glm::vec3 eye (eyex,eyey,eyez);
+					glm::vec3 target (tarx, tary, tarz);
+					glm::vec3 difference = target - eye;
+					glm::vec3 perpendicular = glm::cross(difference,yaxis);
+					angx = glm::dot(perpendicular,xaxis);
+					angz = glm::dot(perpendicular,zaxis);
+					player.velz = 0.02;
+					player.velx = 0.02;
+					player.velz *= angz;
+					player.velx *= angx;
+				}
+				else
+					player.velx = 0.1;
 				
 				break;
 			
@@ -474,17 +600,21 @@ void keyboard (GLFWwindow* window, int key, int scancode, int action, int mods)
 		switch (key) {
 			case GLFW_KEY_W:
 				player.velz =0;
+				player.velx =0;
 				
 				break;
 			case GLFW_KEY_S:
 				player.velz = 0;
+				player.velx=0;
 				
 				break;
 			case GLFW_KEY_A:
 				player.velx = 0;
+				player.velz = 0;
 				break;
 			case GLFW_KEY_D:
 				player.velx = 0;
+				player.velz = 0;
 
 				break;
 			
@@ -531,20 +661,18 @@ void mousePosition (GLFWwindow* window, double xpos, double ypos)
 	
 	if(xpos < prev_x)
 	{
-		angle -=1;
+		angle -=1.5;
 		prev_x = xpos;
 		
 	}
 	else if (xpos > prev_x)
 	{
-		angle +=1;
+		angle +=1.5;
 		prev_x = xpos;
 		
 	}
 }
 
-/* Executed when window is resized to 'width' and 'height' */
-/* Modify the bounds of the screen here in glm::ortho or Field of View in glm::Perspective */
 void reshapeWindow (GLFWwindow* window, int width, int height)
 {
 	int fbwidth=width, fbheight=height;
@@ -1217,9 +1345,9 @@ void draw ()
 
 	else if(followview == true)
 	{
-		eyex = player.posx;
+		eyex = player.posx + 5 *sin(angle*PI/180);
 		eyey = player.posy + 5;
-		eyez = player.posz + 7 ;
+		eyez = player.posz - 5 *cos(angle*PI/180);
 		tarx =player.posx;
 		tary =player.posy;
 		tarz =player.posz;
@@ -1230,7 +1358,7 @@ void draw ()
 	{
 
 		eyex = player.posx;
-		eyey = player.posy+1;
+		eyey = player.posy+2;
 		eyez = player.posz;
 		
 		tarx = player.posx + 3 *sin(angle*PI/180);
@@ -1464,20 +1592,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	 	cubes[j*10+moving_cube2].direction = pow(-1,rand() %2);
 	 }	
 
-	//  int no_of_moving_cubes =0;
-	// while(no_of_moving_cubes < 10)
-	// 	no_of_moving_cubes = rand() % 30;
-	// for (int i = 0; i < no_of_moving_cubes; ++i)
-	// {
-	// 	int cube_no = rand() %100;
-	// 	if(cube_no >9 && cube_no<90)
-	// 	{
-	// 		cubes[cube_no].moving = true;
-	// 		cubes[cube_no].vely = 0.07;
-	// 		cubes[cube_no].posy = rand() %4 -2;
-	// 	}
-
-	// }
+	
 	cubes[3].missing = true;
 	cubes[15].missing = true;
 	
