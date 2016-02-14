@@ -42,6 +42,13 @@ struct CUBE {
 };
 typedef struct CUBE CUBE;
 
+struct COIN {
+	GLfloat posx ,posy,posz;
+	bool is_collected;
+	VAO *vao;
+};
+typedef struct COIN COIN;
+
 struct SEA {
 	GLfloat posx ,posy,posz;
 	VAO *vao;
@@ -371,6 +378,7 @@ bool towerview =false;
 bool is_collide =false;
 VAO *axises;
 CUBE cubes[100];
+COIN coins[54];
 PLAYER player;
 SEA sea[1000];
 int flag=0;
@@ -1198,6 +1206,7 @@ void gravity()
 	
 }
 
+// updating position
 void updateplayer()
 {
 	player.posx +=player.velx;
@@ -1230,7 +1239,6 @@ PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
   difference = center-closest;
   glm::vec3 yaxis( 0.0, 1.0 ,0.0);
   glm::vec3 xaxis( 1.0, 0.0 ,0.0);
-
   glm::vec3 zaxis( 0.0, 0.0 ,1.0);
   // Retrieve vector between center circle and closest point AABB and check if length <= radius
   float yot=glm::dot(difference, yaxis);
@@ -1244,13 +1252,30 @@ PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
       if( xot > 0 && cube.moving==true)
 		{
 		  
-		  player.posx += 0.2;
+		  	//player.posx += 0.2;
+		  	player.velz = 0.01;
+		  	player.velx = 0.01;
+		  	player.velz *= angz;
+			player.velx *= angx;
+			player.posx += player.velx;
+			player.posz +=player.velz;
+			player.velz = 0;
+		  	player.velx = 0;
+
 		  
 		}
       else if( xot < 0 &&cube.moving==true)
 		{
 		  
-		  player.posx -= 0.2;
+		  // player.posx -= 0.2;
+		  	player.velz = 0.01;
+		  	player.velx = 0.01;
+		  	player.velz *= -angz;
+			player.velx *= -angx;
+			player.posx += player.velx;
+			player.posz +=player.velz;
+			player.velz = 0;
+		  	player.velx = 0;
 		  
 		}
       else
@@ -1277,13 +1302,29 @@ PLAYER collision(PLAYER player, CUBE cube) // AABB - Circle collision
 		      if( zot > 0 )
 				{
 			  		
-			  		player.posz += 0.2;
+			  		//player.posz += 0.2;
+			  		player.velz = 0.01;
+					player.velx = 0.01;
+					player.velz *= -angz;
+					player.velx *= -angx;
+					player.posx += player.velx;
+			player.posz +=player.velz;
+			player.velz = 0;
+		  	player.velx = 0;
 		
 				}
 		      else if( zot < 0 )
 				{
 			  		
-			  		player.posz -= 0.2;
+			  		// player.posz -= 0.2;
+			  		player.velz = 0.01;
+					player.velx = 0.01;
+					player.velz *= angz;
+					player.velx *= angx;
+					player.posx += player.velx;
+					player.posz +=player.velz;
+					player.velz = 0;
+		  			player.velx = 0;
 		
 				}
 		    }
@@ -1540,7 +1581,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	GLuint topID = createTexture("lava2.jpg");
 	textureProgramID = LoadShaders( "TextureRender.vert", "TextureRender.frag" );
 	Matrices.TexMatrixID = glGetUniformLocation(textureProgramID, "MVP");
-
+	SoundEngine->play2D("background.wav", GL_TRUE);
 	createaxis();
 
 	int mark = 0;
